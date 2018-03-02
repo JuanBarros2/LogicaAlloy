@@ -4,8 +4,7 @@ sig Porto extends Armazenador{
 	notificacao: lone Notificacao
 }
 
-abstract sig Transporte extends Armazenador{
-}
+abstract sig Transporte extends Armazenador{}
 
 one sig Caminhao, Navio extends Transporte{}
 
@@ -27,6 +26,10 @@ sig Notificacao{}
 abstract sig Nivel {}
 sig Alto, Medio, Baixo extends Nivel{}
 
+fact notificacaoExclusiva{
+	all n: Notificacao | one n.~notificacao
+}
+
 fact conteinerNivel{
 	all n: Nivel | one n.~nivel
 }
@@ -39,7 +42,10 @@ fact transporteCaminhao{
 	all c: Combustivel | one c.~combustivel
 }
 
+fact existeNotificacao{
+	all p: Porto | (one p.notificacao) <=> some(Baixo.~nivel&p.conteiners)
+}
+
 pred show[]{
-	#Porto = 3
 }
 run show for 5
