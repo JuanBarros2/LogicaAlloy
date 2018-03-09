@@ -18,7 +18,9 @@ abstract sig Nivel {}
 
 sig Alto, Medio, Baixo extends Nivel{}
 
-sig Porto extends Armazenador{}
+sig Porto extends Armazenador{}{
+	#Porto = 4
+}
 
 one sig Caminhao, Navio extends Transporte{}
 
@@ -50,7 +52,7 @@ fact combustivelPai{
 }
 
 fact existeNotificacao{
-	all c: Conteiner | (one c.notificacao) <=> some(c.nivel&Baixo)
+	all c: Conteiner | notificaBaixo[c]
 }
 
 fact notificacaoTransporteOrigemUnica{
@@ -69,10 +71,6 @@ fact notificacaoCombustivelNecessario{
 	all n: Notificacao | testaTipoPedido[Gasolina, n] and testaTipoPedido[Petroleo, n] and testaTipoPedido[Diesel, n] 
 }
 
-pred testaTipoPedido[c : Combustivel, n: Notificacao]{
-	one(c & n.~notificacao.combustivel) => some(c & n.transporte.combustivel)
-}
-
 fun obterFonte [n : Notificacao] : one Porto {
 	n.transporte.fonte
 }
@@ -81,12 +79,35 @@ fun obtemCombustivel[c : Combustivel, p: Porto]: some Combustivel{
 	p.conteiners.combustivel & c
 }
 
-
-pred testaTipo[c : Combustivel, n: Notificacao]{
-	one(c & n.transporte.combustivel) => some(obtemCombustivel[c, obterFonte[n]]) and obtemCombustivel[c,obterFonte[n]].~combustivel.nivel in (Alto+Medio)  }
-
-pred show[]{
- 	#Notificacao = 2
+fun niveisNaoCriticos: some Nivel{
+	(Alto+Medio)
 }
 
-run show for 5
+pred notificaBaixo[c :Conteiner]{
+	(one c.notificacao) <=> some(c.nivel & Baixo)
+}
+
+pred testaTipoPedido[c : Combustivel, n: Notificacao]{
+	one(c & n.~notificacao.combustivel) => some(c & n.transporte.combustivel)
+}
+
+pred testaTipo[c : Combustivel, n: Notificacao]{
+	one(c & n.transporte.combustivel) => some(obtemCombustivel[c, obterFonte[n]]) and obtemCombustivel[c,obterFonte[n]].~combustivel.nivel in niveisNaoCriticos }
+
+assert todoPortoComNivelBaixoTemNotificacao{
+	all c: Conteiner | one(c.nivel & Baixo) => one(c.notificacao)
+}
+
+assert quatroPortos{
+	#Porto = 4
+}
+
+assert todoTransporteTemCarga{
+	all t: Transporte | one(t.combustivel)
+}
+
+pred show[]{
+}
+
+check todoTransporteTemCarga for 6
+run show for 6
